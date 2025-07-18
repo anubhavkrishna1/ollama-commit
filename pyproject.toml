@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ollama-commit"
+version = "0.1.0"
+description = "Generate commit messages for staged files using Ollama"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "anubhavkrishna1", email = "anubhavkrishna1@users.noreply.github.com"},
+]
+keywords = ["git", "commit", "ollama", "ai", "automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "requests>=2.25.0",
+    "gitpython>=3.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/anubhavkrishna1/ollama-commit"
+Repository = "https://github.com/anubhavkrishna1/ollama-commit"
+Issues = "https://github.com/anubhavkrishna1/ollama-commit/issues"
+
+[project.scripts]
+ollama-commit = "ollama_commit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ollama_commit*"]
