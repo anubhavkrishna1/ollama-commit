@@ -4,6 +4,7 @@ import argparse
 import sys
 from .commit_generator import CommitGenerator
 from .config import setup_config, get_config
+from .ollama_client import OllamaClient
 
 
 def main():
@@ -12,32 +13,42 @@ def main():
     parser = argparse.ArgumentParser(description='Generate commit messages for staged files using Ollama')
     subparsers = parser.add_subparsers(dest='command')
 
-    setup = subparsers.add_parser("setup", help="Setup the Ollama Rich Client configuration")
+    setup = subparsers.add_parser("setup", help="Setup the Ollama Client configuration")
     setup.add_argument("-s","--host", help="Ollama server host URL")
     setup.add_argument("-m", "--model", help="Default model to use")
 
-    models = subparsers.add_parser("models", help="List available Ollama models")
+    subparsers.add_parser("config", help="Show current configuration")
 
-    commit = subparsers.add_parser("commit", help="Generate commit message for staged files")
+    models = subparsers.add_parser("models", help="List available Ollama models")
+    models.add_argument("-s","--host",help="Ollama server host URL")
+
+    commit = subparsers.add_parser("msg", help="Generate commit message for staged files")
+    commit.add_argument('--commit', '-c', help="Automatically commit with the generated message")
     commit.add_argument('--repo', '-r', default='.', help='Git repository path (default: current directory)')
 
-    parser.add_argument(
-        '--validate', 
-        action='store_true', 
-        help='Validate setup without generating commit message'
-    )
+    validate = subparsers.add_parser("validate", help="Validate setup and configuration")
+    validate.add_argument('--repo', '-r', default='.', help='Git repository path (default: current directory)')
     
     args = parser.parse_args()
+
+    config = get_config()['ollama']
     
     try:
-        config = get_config()['ollama']
-        generator = CommitGenerator(args.repo, config['host'], config['model'])
-
         if args.command == "setup":
             setup_config(args.host, args.model)
+            return
+    
+        elif args.command == "config":
+            print(f"Current configuration:\n  Host: {config['host']}\n  Model: {config['model']}")
+            return
 
-        if args.command == "models":
-            models = generator.get_models()
+        elif args.command == "models":
+            if args.host:
+                host = args.host
+            else:
+                host = config['host']
+            client = OllamaClient(host)
+            models = client.list_models()
             if models:
                 print("Available Ollama models:")
                 for m in models:
@@ -45,8 +56,9 @@ def main():
             else:
                 print("No models found or Ollama not available.")
             return
-        
-        if args.validate:
+
+        elif args.command == "validate":
+            generator = CommitGenerator(args.repo, config['host'], config['model'])
             validation = generator.validate_setup()
             print("Setup validation:")
             print(f"  Git repository: {'✓' if validation['git_repo'] else '✗'}")
@@ -56,7 +68,8 @@ def main():
                 print(f"  Available models: {', '.join(validation['models'])}")
             return
 
-        if args.command == "commit":
+        elif args.command == "msg":
+            generator = CommitGenerator(args.repo, config['host'], config['model'])
             # Generate commit message
             result = generator.generate()
 
@@ -77,7 +90,7 @@ def main():
             print(f"\nGenerated commit message:")
             print(f"  {commit_message}")
             
-            if args.commit:
+            if args.command =="commit":
                 # Auto-commit
                 import subprocess
                 try:
